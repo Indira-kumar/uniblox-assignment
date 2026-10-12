@@ -6,9 +6,9 @@ A Python API for the reliable checkout assignment. The design is a modular monol
 
 ![Checkout service HLD](assets/checkout-service-hld.png)
 
-## Current scope: modules 1–4
+## Current scope: modules 1–5
 
-The runnable service exposes the seeded product catalog, carts, live-price quotes, atomic checkout, immutable orders, milestone coupons, and health endpoints. Reporting is the next module.
+The runnable service exposes the seeded product catalog, carts, live-price quotes, atomic checkout, immutable orders, milestone coupons, an administrative report, and health endpoints.
 
 ### Run locally with Docker Compose
 
@@ -46,6 +46,7 @@ The `uv.lock` file pins Python dependencies. To stop containers, run `docker com
 | `POST /carts/{id}/checkout` | `201` with an order; identical retry returns `200` with the same order |
 | `GET /orders/{id}` | `200` with immutable purchased lines and totals |
 | `POST /admin/coupons/generate` | `201` with a coupon for the oldest eligible milestone; `409` when none is eligible |
+| `GET /admin/report` | `200` with purchased quantities, money totals, and coupon counts |
 | `GET /health/live` | `200` when the API process is running |
 | `GET /health/ready` | `200` when PostgreSQL is reachable |
 
@@ -56,3 +57,5 @@ Cart items do not reserve inventory or freeze prices. A quote token changes when
 Checkout requires the cart's current `quote_token`, locks the cart and products in a stable order, and decrements stock in the same transaction as order creation. A stale quote or insufficient stock returns `409` without a partial order or inventory change.
 
 Checkout accepts an optional `coupon_code`. A generated coupon can be redeemed once; discount is rounded to the nearest cent with half cents rounded up. A failed checkout leaves the coupon available. The seed creates reward settings of one 10% coupon per five placed orders by default. Set `REWARD_EVERY_N` and `REWARD_DISCOUNT_PERCENT` on the migration/seed service before initializing a fresh database to use other values. Existing settings are intentionally not overwritten by a later seed.
+
+The report reads orders, order lines, and coupons from one read-only PostgreSQL snapshot, so a concurrent checkout cannot make its aggregates disagree.

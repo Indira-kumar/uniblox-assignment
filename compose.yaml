@@ -1,0 +1,47 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: checkout
+      POSTGRES_USER: checkout
+      POSTGRES_PASSWORD: checkout
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U checkout -d checkout"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/create-test-db.sql:/docker-entrypoint-initdb.d/create-test-db.sql:ro
+
+  migrate:
+    build: .
+    environment:
+      DATABASE_URL: postgresql+psycopg://checkout:checkout@db:5432/checkout
+    depends_on:
+      db:
+        condition: service_healthy
+    command: sh -c "alembic upgrade head && python -m app.db.seed"
+
+  api:
+    build: .
+    environment:
+      DATABASE_URL: postgresql+psycopg://checkout:checkout@db:5432/checkout
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    ports:
+      - "8000:8000"
+
+  tests:
+    profiles: ["test"]
+    build: .
+    environment:
+      DATABASE_URL: postgresql+psycopg://checkout:checkout@db:5432/checkout_test
+    depends_on:
+      db:
+        condition: service_healthy
+    command: sh -c "alembic upgrade head && pytest -q"
+
+volumes:
+  postgres_data:

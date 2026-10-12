@@ -18,6 +18,8 @@ services:
     build: .
     environment:
       DATABASE_URL: postgresql+psycopg://checkout:checkout@db:5432/checkout
+      REWARD_EVERY_N: ${REWARD_EVERY_N:-5}
+      REWARD_DISCOUNT_PERCENT: ${REWARD_DISCOUNT_PERCENT:-10}
     depends_on:
       db:
         condition: service_healthy
@@ -42,6 +44,16 @@ services:
       db:
         condition: service_healthy
     command: sh -c "alembic upgrade head && pytest -q"
+
+  demo:
+    profiles: ["demo"]
+    build: .
+    environment:
+      DATABASE_URL: postgresql+psycopg://checkout:checkout@db:5432/checkout_demo
+    depends_on:
+      db:
+        condition: service_healthy
+    command: sh -c "python -m scripts.prepare_demo && alembic upgrade head && python -m scripts.demo"
 
 volumes:
   postgres_data:

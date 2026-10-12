@@ -13,6 +13,7 @@ from app.core.errors import DomainError
 from app.core.pricing import MAX_MONEY_CENTS, line_total_cents, make_quote_token
 from app.orders import repository as order_repository
 from app.orders.models import Order, OrderLine
+from app.rewards import repository as reward_repository
 
 
 @dataclass(frozen=True)
@@ -40,8 +41,10 @@ def request_fingerprint(quote_token: str, coupon_code: str | None = None) -> str
     return hashlib.sha256(encoded).hexdigest()
 
 
-def checkout(session: Session, cart_id: UUID, quote_token: str) -> CheckoutResult:
-    fingerprint = request_fingerprint(quote_token)
+def checkout(
+    session: Session, cart_id: UUID, quote_token: str, coupon_code: str | None = None
+) -> CheckoutResult:
+    fingerprint = request_fingerprint(quote_token, coupon_code)
     with session.begin():
         cart = cart_repository.get_cart(session, cart_id, for_update=True)
         if cart is None:
@@ -111,6 +114,19 @@ def checkout(session: Session, cart_id: UUID, quote_token: str) -> CheckoutResul
         if gross_cents > MAX_MONEY_CENTS:
             raise DomainError("CART_TOTAL_TOO_LARGE", "Cart total exceeds the supported range", 422)
 
+        coupon_id = None
+        discount_cents = 0
+        if coupon_code is not None:
+            coupon = reward_repository.get_coupon_by_code(session, coupon_code, for_update=True)
+            if coupon is None:
+                raise DomainError("COUPON_NOT_FOUND", "Coupon does not exist", 404)
+            if reward_repository.is_redeemed(session, coupon.id):
+                raise DomainError(
+                    "COUPON_ALREADY_REDEEMED", "Coupon has already been redeemed", 409
+                )
+            coupon_id = coupon.id
+            discount_cents = (gross_cents * coupon.discount_percent + 50) // 100
+
         for line in lines:
             if not catalog_repository.decrement_stock(session, line.product_id, line.quantity):
                 raise DomainError(
@@ -122,9 +138,10 @@ def checkout(session: Session, cart_id: UUID, quote_token: str) -> CheckoutResul
 
         order = Order(
             cart_id=cart_id,
+            coupon_id=coupon_id,
             gross_cents=gross_cents,
-            discount_cents=0,
-            net_cents=gross_cents,
+            discount_cents=discount_cents,
+            net_cents=gross_cents - discount_cents,
             request_fingerprint=fingerprint,
         )
         session.add(order)

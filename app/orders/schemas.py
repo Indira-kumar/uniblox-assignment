@@ -17,6 +17,7 @@ class OrderLineResponse(BaseModel):
 class OrderResponse(BaseModel):
     id: UUID
     cart_id: UUID
+    coupon_code: str | None
     lines: list[OrderLineResponse]
     gross_cents: int
     discount_cents: int

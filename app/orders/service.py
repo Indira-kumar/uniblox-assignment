@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.core.errors import DomainError
 from app.orders import repository
 from app.orders.schemas import OrderLineResponse, OrderResponse
+from app.rewards import repository as reward_repository
 
 
 def get_order(session: Session, order_id: UUID) -> OrderResponse:
@@ -27,6 +28,9 @@ def get_order(session: Session, order_id: UUID) -> OrderResponse:
     return OrderResponse(
         id=order.id,
         cart_id=order.cart_id,
+        coupon_code=(
+            reward_repository.get_coupon(session, order.coupon_id).code if order.coupon_id else None
+        ),
         lines=lines,
         gross_cents=order.gross_cents,
         discount_cents=order.discount_cents,

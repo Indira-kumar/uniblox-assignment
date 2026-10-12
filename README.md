@@ -6,9 +6,9 @@ A Python API for the reliable checkout assignment. The design is a modular monol
 
 ![Checkout service HLD](assets/checkout-service-hld.png)
 
-## Current scope: modules 1–3
+## Current scope: modules 1–4
 
-The runnable service exposes the seeded product catalog, carts, live-price quotes, atomic checkout, immutable orders, and health endpoints. Rewards and reporting are the next modules.
+The runnable service exposes the seeded product catalog, carts, live-price quotes, atomic checkout, immutable orders, milestone coupons, and health endpoints. Reporting is the next module.
 
 ### Run locally with Docker Compose
 
@@ -45,6 +45,7 @@ The `uv.lock` file pins Python dependencies. To stop containers, run `docker com
 | `DELETE /carts/{id}/items/{product_id}` | `204` after removing an item |
 | `POST /carts/{id}/checkout` | `201` with an order; identical retry returns `200` with the same order |
 | `GET /orders/{id}` | `200` with immutable purchased lines and totals |
+| `POST /admin/coupons/generate` | `201` with a coupon for the oldest eligible milestone; `409` when none is eligible |
 | `GET /health/live` | `200` when the API process is running |
 | `GET /health/ready` | `200` when PostgreSQL is reachable |
 
@@ -53,3 +54,5 @@ Product 5 has one unit of inventory for the later concurrency demonstration. Pri
 Cart items do not reserve inventory or freeze prices. A quote token changes when the cart or a product's displayed details change. Setting the same quantity twice leaves the cart version and quote token unchanged.
 
 Checkout requires the cart's current `quote_token`, locks the cart and products in a stable order, and decrements stock in the same transaction as order creation. A stale quote or insufficient stock returns `409` without a partial order or inventory change.
+
+Checkout accepts an optional `coupon_code`. A generated coupon can be redeemed once; discount is rounded to the nearest cent with half cents rounded up. A failed checkout leaves the coupon available. The seed creates reward settings of one 10% coupon per five placed orders by default. Set `REWARD_EVERY_N` and `REWARD_DISCOUNT_PERCENT` on the migration/seed service before initializing a fresh database to use other values. Existing settings are intentionally not overwritten by a later seed.

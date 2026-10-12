@@ -9,6 +9,7 @@ from app.carts.router import router as carts_router
 from app.catalog.router import router as catalog_router
 from app.checkout.router import router as checkout_router
 from app.orders.router import router as orders_router
+from app.rewards.router import router as rewards_router
 
 
 def create_app() -> FastAPI:
@@ -18,6 +19,7 @@ def create_app() -> FastAPI:
     app.include_router(carts_router)
     app.include_router(checkout_router)
     app.include_router(orders_router)
+    app.include_router(rewards_router)
 
     @app.get("/health/live", tags=["health"])
     def live() -> dict[str, str]:

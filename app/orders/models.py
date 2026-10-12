@@ -33,6 +33,12 @@ class Order(Base):
     cart_id: Mapped[UUID] = mapped_column(
         Uuid(as_uuid=True), ForeignKey("carts.id", ondelete="RESTRICT"), unique=True, nullable=False
     )
+    coupon_id: Mapped[UUID | None] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("coupons.id", ondelete="RESTRICT"),
+        unique=True,
+        nullable=True,
+    )
     gross_cents: Mapped[int] = mapped_column(BigInteger, nullable=False)
     discount_cents: Mapped[int] = mapped_column(BigInteger, nullable=False)
     net_cents: Mapped[int] = mapped_column(BigInteger, nullable=False)

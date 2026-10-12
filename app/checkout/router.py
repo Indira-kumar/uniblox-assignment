@@ -21,7 +21,7 @@ router = APIRouter(tags=["checkout"])
 def checkout(
     cart_id: UUID, body: CheckoutRequest, response: Response, session: SessionDependency
 ) -> OrderResponse:
-    result = service.checkout(session, cart_id, body.quote_token)
+    result = service.checkout(session, cart_id, body.quote_token, body.coupon_code)
     if not result.created:
         response.status_code = status.HTTP_200_OK
     return order_service.get_order(session, result.order_id)

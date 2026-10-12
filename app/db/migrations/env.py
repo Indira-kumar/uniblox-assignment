@@ -2,6 +2,7 @@
 
 from alembic import context
 
+from app.carts import models as cart_models  # noqa: F401
 from app.catalog import models as catalog_models  # noqa: F401
 from app.core.config import get_settings
 from app.db.base import Base

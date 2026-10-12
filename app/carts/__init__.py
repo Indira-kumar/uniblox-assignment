@@ -1,0 +1,1 @@
+"""Cart and quote module."""

@@ -6,9 +6,9 @@ A Python API for the reliable checkout assignment. The design is a modular monol
 
 ![Checkout service HLD](assets/checkout-service-hld.png)
 
-## Current scope: module 1
+## Current scope: modules 1–2
 
-The runnable service currently exposes a seeded product catalog and health endpoints. Carts, checkout, rewards, and reporting are the next modules; their routes are not present yet.
+The runnable service exposes the seeded product catalog, carts, live-price quotes, and health endpoints. Checkout, rewards, and reporting are the next modules; their routes are not present yet.
 
 ### Run locally with Docker Compose
 
@@ -34,12 +34,18 @@ uv run ruff format --check .
 
 The `uv.lock` file pins Python dependencies. To stop containers, run `docker compose down`. To **erase local database data** and recreate both databases from scratch, run `docker compose down -v`.
 
-## Module 1 API
+## Available API
 
 | Endpoint | Response |
 | --- | --- |
 | `GET /products` | `200` with product IDs, names, prices in cents, and available inventory |
+| `POST /carts` | `201` with an empty cart and quote token |
+| `GET /carts/{id}` | `200` with current product prices, line totals, gross, and quote token |
+| `PUT /carts/{id}/items/{product_id}` | `200` after setting an absolute positive quantity |
+| `DELETE /carts/{id}/items/{product_id}` | `204` after removing an item |
 | `GET /health/live` | `200` when the API process is running |
 | `GET /health/ready` | `200` when PostgreSQL is reachable |
 
 Product 5 has one unit of inventory for the later concurrency demonstration. Prices are integer cents; the intended currency is USD.
+
+Cart items do not reserve inventory or freeze prices. A quote token changes when the cart or a product's displayed details change. Setting the same quantity twice leaves the cart version and quote token unchanged.

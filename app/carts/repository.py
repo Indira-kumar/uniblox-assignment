@@ -31,3 +31,8 @@ def list_cart_rows(
 
 def get_item(session: Session, cart_id: UUID, product_id: int) -> CartItem | None:
     return session.get(CartItem, (cart_id, product_id))
+
+
+def list_items(session: Session, cart_id: UUID) -> list[CartItem]:
+    statement = select(CartItem).where(CartItem.cart_id == cart_id).order_by(CartItem.product_id)
+    return list(session.scalars(statement))

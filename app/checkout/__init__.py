@@ -1,0 +1,1 @@
+"""Transactional checkout use case."""

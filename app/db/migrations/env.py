@@ -7,6 +7,7 @@ from app.catalog import models as catalog_models  # noqa: F401
 from app.core.config import get_settings
 from app.db.base import Base
 from app.db.session import get_engine
+from app.orders import models as order_models  # noqa: F401
 
 target_metadata = Base.metadata
 

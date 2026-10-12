@@ -4,6 +4,8 @@ import hashlib
 import json
 from collections.abc import Sequence
 
+MAX_MONEY_CENTS = 2**63 - 1
+
 
 def line_total_cents(quantity: int, unit_price_cents: int) -> int:
     return quantity * unit_price_cents

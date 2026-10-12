@@ -7,6 +7,8 @@ from app.api.dependencies import SessionDependency
 from app.api.error_handlers import register_error_handlers
 from app.carts.router import router as carts_router
 from app.catalog.router import router as catalog_router
+from app.checkout.router import router as checkout_router
+from app.orders.router import router as orders_router
 
 
 def create_app() -> FastAPI:
@@ -14,6 +16,8 @@ def create_app() -> FastAPI:
     register_error_handlers(app)
     app.include_router(catalog_router)
     app.include_router(carts_router)
+    app.include_router(checkout_router)
+    app.include_router(orders_router)
 
     @app.get("/health/live", tags=["health"])
     def live() -> dict[str, str]:

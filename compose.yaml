@@ -53,7 +53,19 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    command: sh -c "python -m scripts.prepare_demo && alembic upgrade head && python -m scripts.demo"
+    command: sh -c "python -m scripts.prepare_database && alembic upgrade head && python -m scripts.demo"
+
+  load:
+    profiles: ["load"]
+    build: .
+    environment:
+      DATABASE_URL: postgresql+psycopg://checkout:checkout@db:5432/checkout_load
+      LOAD_ORDERS: ${LOAD_ORDERS:-100}
+      LOAD_CLIENTS: ${LOAD_CLIENTS:-8}
+    depends_on:
+      db:
+        condition: service_healthy
+    command: sh -c "python -m scripts.prepare_database && alembic upgrade head && python -m scripts.load_test"
 
 volumes:
   postgres_data:

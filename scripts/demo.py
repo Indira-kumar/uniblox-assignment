@@ -13,8 +13,9 @@ from app.main import app
 
 
 def reset_demo_data() -> None:
-    if make_url(str(get_engine().url)).database != "checkout_demo":
-        raise RuntimeError("Demo can only reset checkout_demo")
+    url = make_url(str(get_engine().url))
+    if url.host != "db" or url.database != "checkout_demo":
+        raise RuntimeError("Demo can only reset the local Compose checkout_demo database")
     with get_engine().begin() as connection:
         connection.execute(
             text("TRUNCATE products, carts, coupons, reward_policy RESTART IDENTITY CASCADE")

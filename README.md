@@ -37,7 +37,18 @@ uv run ruff format --check .
 uv lock --check
 ```
 
-`uv.lock` pins the dependencies. `docker compose down` stops the services. `docker compose down -v` **deletes all local Compose database data**, including the API, test, and demo databases.
+`uv.lock` pins the dependencies. `docker compose down` stops the services. `docker compose down -v` **deletes all local Compose database data**, including the API, test, demo, and load databases.
+
+## Put load on the API
+
+The load command uses a dedicated `checkout_load` database. Each run resets that database, starts **two real API worker processes**, and sends HTTP requests through concurrent clients. Each client creates a cart, adds one product, checks out, and retries checkout. The script checks the final order count, revenue, purchased quantity, unique order IDs, and remaining inventory before reporting success.
+
+```sh
+docker compose --profile load run --build --rm load
+LOAD_ORDERS=500 LOAD_CLIENTS=32 docker compose --profile load run --build --rm load
+```
+
+The defaults are 100 orders and 8 concurrent clients. The output includes requests per second, orders per second, and p50/p95/p99 checkout and full-flow latency. `"passed": true` means both the load run and final reconciliation succeeded; the command exits nonzero on failure. Increase concurrency gradually and compare latency, error count, and throughput. In another terminal, `docker stats` shows CPU and memory use. This runs the API, load generator, and PostgreSQL on one machine, so the numbers describe this local setup rather than production capacity. The regular `checkout` database is not reset.
 
 ## Behavior at a glance
 

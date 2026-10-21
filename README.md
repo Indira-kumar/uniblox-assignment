@@ -10,6 +10,8 @@ Docker Compose is the only runtime prerequisite. It starts PostgreSQL, applies m
 
 ```sh
 docker compose up --build -d api
+```
+```sh
 curl http://localhost:8000/products
 ```
 
@@ -27,18 +29,29 @@ The integration tests use a separate `checkout_test` database and real PostgreSQ
 
 ```sh
 docker compose --profile test run --build --rm tests
+```
+
+Lint and code formating:
+```sh
 uv sync
 uv run ruff check .
 uv run ruff format --check .
 uv lock --check
 ```
 
-## Put load on the API
+## load testing on the API
 
 The load command uses a dedicated `checkout_load` database. Each run resets that database, starts **two real API worker processes**, and sends HTTP requests through concurrent clients.
 ```sh
 docker compose --profile load run --build --rm load
 LOAD_ORDERS=500 LOAD_CLIENTS=32 docker compose --profile load run --build --rm load
 ```
+Results of above load test with 500 orders and 32 clients:
+![load-testing-results](./assets/load-testing-results.png)
+
+### What I will do if I get 1-2 more hours:
+- run load test with EXPLAIN(ANALYSE, BUFFERS) and find out bottlenecks in SQL queries
+- examine other performance bottlenecks(missing index, DB pool exhaustion) and fix the same
+
 
 > Note: The major choices, limits, and scale path are explained in [DECISIONS.md](DECISIONS.md).

@@ -1,6 +1,7 @@
 services:
   db:
-    image: postgres:17-alpine
+    build:
+      context: ./docker
     environment:
       POSTGRES_DB: checkout
       POSTGRES_USER: checkout
@@ -12,7 +13,6 @@ services:
       retries: 15
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./docker/create-test-db.sql:/docker-entrypoint-initdb.d/create-test-db.sql:ro
 
   migrate:
     build: .
